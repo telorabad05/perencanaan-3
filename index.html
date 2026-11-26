@@ -492,11 +492,11 @@ function fmtNum(v) {
   if (v == null || v === '') return '';
   var n = toNum(v);
   if (n == null) return String(v);
-  return new Intl.NumberFormat('id-ID', { maximumFractionDigits: 2 }).format(n);
+  return new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(n);
 }
 function fmtDiff(v) {
   if (v == null) return '';
-  var s = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 2 }).format(Math.abs(v));
+  var s = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(Math.abs(v));
   if (v > 0) return '+' + s;
   if (v < 0) return '-' + s;
   return '0';
@@ -2431,7 +2431,7 @@ if (typeof module !== 'undefined' && module.exports) {
     var NC = 13; /* A..M */
     var THIN = { style: 'thin', color: { rgb: 'FF9E9E9E' } };
     var BORD = { top: THIN, bottom: THIN, left: THIN, right: THIN };
-    var NUMF = '#,##0.##';
+    var NUMF = '#,##0';
     var sTitle1 = { font: { bold: true, sz: 13 }, alignment: { horizontal: 'center', vertical: 'center' } };
     var sTitle = { font: { bold: true, sz: 11.5 }, alignment: { horizontal: 'center', vertical: 'center' } };
     var sHead = { font: { bold: true, sz: 11 }, fill: { fgColor: { rgb: 'FFFFF2CC' } }, alignment: { horizontal: 'center', vertical: 'center', wrapText: true }, border: BORD };
