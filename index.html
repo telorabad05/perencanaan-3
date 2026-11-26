@@ -2163,7 +2163,9 @@ if (typeof module !== 'undefined' && module.exports) {
   var NCOL_LATEST = 3 + DISPLAY_COLS.length;
 
   /* Estimasi Kebutuhan dihitung dengan rumus perencanaan metode konsumsi
-     Kemenkes: A = (B + C + D) - E, dengan B = pemakaian rata-rata x 12,
+     Kemenkes: A = (B + C + D) - E, dengan B = TOTAL pemakaian dari seluruh
+     bulan data (keputusan Hugo 2026-11-26: TANPA dikali 12 — total dari
+     datanya sendiri yang dipakai, bukan rata-rata yang dianualkan),
      C = buffer % x B, D = lead time (bulan) x pemakaian rata-rata,
      E = sisa stok (Stok Akhir terakhir dari peta nilai terbaru). Rata-rata
      dari lapisan bulanan yang memuat Stok Akhir item (lihat usageStats).
@@ -2175,7 +2177,7 @@ if (typeof module !== 'undefined' && module.exports) {
     var st = usageStats(p.layers, sheetName, id);
     if (!st) return null;
     var r = p.rumus || { buffer: 25, lead: 1 };
-    var B = st.avg * 12;
+    var B = st.total;
     var C = B * (Number(r.buffer) || 0) / 100;
     var D = st.avg * (Number(r.lead) || 0);
     var eE = latest['STOK AKHIR JUMLAH'] && latest['STOK AKHIR JUMLAH'][id];
@@ -2299,7 +2301,7 @@ if (typeof module !== 'undefined' && module.exports) {
           if (dc.canon.indexOf('ESTIMASI') === 0) {
             var esx = estimasi(rec.id);
             ctitle = esx
-              ? 'Rumus metode konsumsi Kemenkes: A = (B + C + D) − E. B stok kerja = rata-rata ' + fmtNum(Math.round(esx.avg * 100) / 100) + '/bln × 12 = ' + fmtNum(Math.round(esx.B)) + ' (dari ' + esx.months + ' bulan data); C buffer ' + fmtNum(Math.round(esx.C)) + '; D lead time ' + fmtNum(Math.round(esx.D)) + '; E sisa stok ' + fmtNum(esx.E) + ' → A = ' + fmtNum(esx.A) + '. Harga = Jumlah × Harga satuan.'
+              ? 'Rumus metode konsumsi: A = (B + C + D) − E. B = total pemakaian ' + fmtNum(Math.round(esx.B)) + ' dari ' + esx.months + ' bulan data (rata-rata ' + fmtNum(Math.round(esx.avg * 100) / 100) + '/bln, tanpa dikali 12); C buffer ' + fmtNum(Math.round(esx.C)) + '; D lead time ' + fmtNum(Math.round(esx.D)) + '; E sisa stok ' + fmtNum(esx.E) + ' → A = ' + fmtNum(esx.A) + '. Harga = Jumlah × Harga satuan.'
               : 'Estimasi Kebutuhan dihitung otomatis (rumus metode konsumsi Kemenkes) begitu ada data pemakaian bulanan; sementara ini menampilkan nilai estimasi tersimpan bila ada.';
           }
           cellsHtml += '<td class="num calc" title="' + esc(ctitle) + '">' + (v != null ? esc(fmtNum(v)) : '') + '</td>';
