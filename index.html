@@ -991,29 +991,37 @@ function fillNilai(latest) {
 }
 
 /* Statistik pemakaian bulanan satu item dari lapisan-lapisan sinkron (bukan
-   lapisan edit manual). Satu lapisan yang memuat STOK AKHIR JUMLAH item =
-   satu bulan data; pemakaian bulan itu = |Stok Awal + Penerimaan - Stok Akhir|
-   (kolom kosong dianggap 0, sama seperti aturan kolom Pemakaian).
+   lapisan edit manual). Upload di aplikasi ini per KOLOM (file Stok Awal,
+   file Penerimaan, file Stok Akhir terpisah), jadi bulan data dihitung per
+   TANGGAL snapshot, bukan per file: lapisan diurutkan (tanggal, ts), nilai
+   terakhir tiap kolom diakumulasi, dan setiap lapisan yang memuat
+   STOK AKHIR JUMLAH item memicu snapshot tanggal itu dengan nilai gabungan
+   terakhir — pemakaian tanggal = |Stok Awal + Penerimaan - Stok Akhir|,
+   persis angka kolom Pemakaian di tabel. Beberapa file di tanggal yang sama
+   = satu bulan (snapshot terakhir tanggal itu yang dipakai).
    Mengembalikan { months, total, avg } atau null bila belum ada bulan data.
    Dipakai rumus perencanaan metode konsumsi Kemenkes: A = (B + C + D) - E. */
 function usageStats(layers, sheetName, id) {
   var sorted = (layers || []).filter(function (l) { return !l.manual; }).slice().sort(function (a, b) {
     return (a.date < b.date ? -1 : a.date > b.date ? 1 : (a.ts || 0) - (b.ts || 0));
   });
-  var months = 0, total = 0;
+  var runSA = null, runP = null, byDate = {}, order = [];
   sorted.forEach(function (layer) {
     var sh = null;
     Object.keys(layer.sheets || {}).forEach(function (k) { if (normKey(k) === normKey(sheetName)) sh = layer.sheets[k]; });
-    if (!sh || !sh['STOK AKHIR JUMLAH']) return;
+    if (!sh) return;
+    if (sh['STOK AWAL']) { var v1 = toNum(sh['STOK AWAL'][id]); if (v1 != null) runSA = v1; }
+    if (sh['PENERIMAAN JUMLAH']) { var v2 = toNum(sh['PENERIMAAN JUMLAH'][id]); if (v2 != null) runP = v2; }
+    if (!sh['STOK AKHIR JUMLAH']) return;
     var sak = toNum(sh['STOK AKHIR JUMLAH'][id]);
     if (sak == null) return;
-    var sa = sh['STOK AWAL'] ? toNum(sh['STOK AWAL'][id]) : null;
-    var p = sh['PENERIMAAN JUMLAH'] ? toNum(sh['PENERIMAAN JUMLAH'][id]) : null;
-    total += Math.abs((sa || 0) + (p || 0) - sak);
-    months++;
+    if (!(layer.date in byDate)) order.push(layer.date);
+    byDate[layer.date] = Math.abs((runSA || 0) + (runP || 0) - sak);
   });
-  if (!months) return null;
-  return { months: months, total: total, avg: total / months };
+  if (!order.length) return null;
+  var total = 0;
+  order.forEach(function (d) { total += byDate[d]; });
+  return { months: order.length, total: total, avg: total / order.length };
 }
 
 if (typeof module !== 'undefined' && module.exports) {
